@@ -3,6 +3,9 @@
   "version": "1.1.6",
   "description": "Helper library for uploading files from your local computer into the NetSuite File Cabinet from nodejs.",
   "main": "index.js",
+  "bin": {
+    "netsuite-upload": "./bin/netsuite-upload"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -22,11 +25,14 @@
   },
   "homepage": "https://github.com/icsfl/netsuite-uploader-util#readme",
   "dependencies": {
+    "fast-glob": "^2.2.2",
+    "nconf": "^0.10.0",
     "oauth": "^0.9.15",
     "q": "^1.4.1",
     "readline-sync": "^1.4.2",
     "request": "^2.83.0",
     "string-template": "^1.0.0",
-    "upath": "^1.0.2"
+    "upath": "^1.0.2",
+    "yargs": "^12.0.1"
   }
 }
