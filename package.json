@@ -25,6 +25,7 @@
   },
   "homepage": "https://github.com/icsfl/netsuite-uploader-util#readme",
   "dependencies": {
+    "bluebird": "^3.5.1",
     "fast-glob": "^2.2.2",
     "nconf": "^0.10.0",
     "oauth": "^0.9.15",

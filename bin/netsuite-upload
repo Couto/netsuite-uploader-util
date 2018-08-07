@@ -6,6 +6,7 @@ const nconf = require('nconf');
 const fg = require('fast-glob');
 const yargs = require('yargs');
 const nsutil = require('../');
+const bluebird = require('bluebird');
 
 // Utilities
 const remove = (prefix, value) => value.replace(prefix, '');
@@ -45,6 +46,10 @@ const options = {
   },
   production: { alias: 'p', describe: 'Upload files to production if true' },
   targetHostname: { alias: 'n', describe: 'Hostname to use for file upload' },
+  requestConcurrency: {
+    alias: 'r',
+    describe: 'How many files should it upload at the same time',
+  },
 };
 
 const argvOptions = yargs
@@ -66,6 +71,7 @@ nconf
   .defaults({
     nsVersion: '2017_2',
     production: false,
+    requestConcurrency: 8,
   });
 
 // I think we have everything we need, so let's start uploading files
@@ -78,12 +84,15 @@ const uploadFile = file =>
     .then(() =>
       client.upload(
         file,
-        `${nconf.get('targetDirectory')}/${path.basename(file)}`
+        path.join(nconf.get('targetDirectory'), path.basename(file))
       )
     )
     .then(f =>
       console.log(
-        `Uploaded: ${nconf.get('targetDirectory')}/${path.basename(file)}`
+        `Uploaded: ${path.join(
+          nconf.get('targetDirectory'),
+          path.basename(file)
+        )}`
       )
     );
 
@@ -110,5 +119,9 @@ Promise.all([
 
     return files;
   })
-  .then(files => Promise.all(files.map(uploadFile)))
+  .then(files =>
+    bluebird.map(files, uploadFile, {
+      concurrency: nconf.get('requestConcurrency'),
+    })
+  )
   .catch(e => console.error(e));
