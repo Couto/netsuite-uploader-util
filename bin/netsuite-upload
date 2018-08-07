@@ -44,7 +44,7 @@ const options = {
     describe: 'Which folder in netsuite should the files be stored',
   },
   production: { alias: 'p', describe: 'Upload files to production if true' },
-  hostname: { alias: 'n', describe: 'Hostname to use for file upload' },
+  targetHostname: { alias: 'n', describe: 'Hostname to use for file upload' },
 };
 
 const argvOptions = yargs
@@ -71,6 +71,7 @@ nconf
 // I think we have everything we need, so let's start uploading files
 const client = new nsutil.SuiteTalk();
 const files = nconf.get('_');
+
 const uploadFile = file =>
   Promise.resolve()
     .then(() => console.log(`Uploading ${file} to ${client.hostname}`))
@@ -86,8 +87,8 @@ const uploadFile = file =>
       )
     );
 
-if (nconf.get('hostname')) {
-  client.hostname = nconf.get('hostname');
+if (nconf.get('targetHostname')) {
+  client.hostname = nconf.get('targetHostname');
 }
 
 Promise.all([
