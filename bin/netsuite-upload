@@ -12,57 +12,79 @@ const remove = (prefix, value) => value.replace(prefix, '');
 const toCamelCase = str => {
   const string = str
     .toLowerCase()
-    .replace(
-      /(?:(^.)|([-_\s]+.))/g,
-      s => s.charAt(s.length - 1).toUpperCase()
-    );
+    .replace(/(?:(^.)|([-_\s]+.))/g, s => s.charAt(s.length - 1).toUpperCase());
 
   return string.charAt(0).toLowerCase() + string.substring(1);
-}
+};
 
 // remove the NETSUITE_ prefix and convert to camelCase
 const normalizeKey = str => toCamelCase(remove('NETSUITE_', str));
 
 // CLI options
 const options = {
-  accountId: { alias: 'a', describe: 'Account ID. You can find it in: Setup > Integration > Web Services Preferences' },
-  consumerKey: { alias: 'c', describe: 'Consumer Key.' }, 
+  accountId: {
+    alias: 'a',
+    describe:
+      'Account ID. You can find it in: Setup > Integration > Web Services Preferences',
+  },
+  consumerKey: { alias: 'c', describe: 'Consumer Key.' },
   consumerSecret: { alias: 's', describe: 'Consumer Secret' },
-  tokenId: { alias: 'i', describe: 'Token ID. You can create one in: Setup > Users/Roles > Access Tokens > New ' },
-  tokenSecret: { alias: 't', describe: 'Token Secret. You can create one in: Setup > Users/Roles > Access Tokens > New ' },
-  targetDirectory: { alias: 'd',describe: 'Which folder in netsuite should the files be stored' },
+  tokenId: {
+    alias: 'i',
+    describe:
+      'Token ID. You can create one in: Setup > Users/Roles > Access Tokens > New ',
+  },
+  tokenSecret: {
+    alias: 't',
+    describe:
+      'Token Secret. You can create one in: Setup > Users/Roles > Access Tokens > New ',
+  },
+  targetDirectory: {
+    alias: 'd',
+    describe: 'Which folder in netsuite should the files be stored',
+  },
   production: { alias: 'p', describe: 'Upload files to production if true' },
-  hostname: { alias: 'n', describe: 'Hostname to use for file upload' }
+  hostname: { alias: 'n', describe: 'Hostname to use for file upload' },
 };
 
 const argvOptions = yargs
   .options(options)
   .usage('Usage: $0 [options] files')
   .help('h')
-  .alias('h', 'help')
+  .alias('h', 'help');
 
 // Load configurations from cli command, then environment variables, and finally
 // from the configuration file (also perform lookup for the file)
 nconf
   .argv(argvOptions)
-  .env({ 
+  .env({
     whitelist: Object.keys(options),
     parseValues: true,
-    transform: ({ key, value }) => ({ key: normalizeKey(key), value })
+    transform: ({ key, value }) => ({ key: normalizeKey(key), value }),
   })
   .file({ file: '.netsuiterc.json', search: true })
-  .defaults({ 
+  .defaults({
     nsVersion: '2017_2',
-    production: false
+    production: false,
   });
 
 // I think we have everything we need, so let's start uploading files
 const client = new nsutil.SuiteTalk();
 const files = nconf.get('_');
-const uploadFile = file => client.upload(
-  file, 
-  `${nconf.get('targetDirectory')}/${path.basename(file)}`
-);
+const uploadFile = file =>
+  Promise.resolve()
+    .then(() => console.log(`Uploading ${file} to ${client.hostname}`))
+    .then(() =>
+      client.upload(
+        file,
+        `${nconf.get('targetDirectory')}/${path.basename(file)}`
+      )
+    )
+    .then(f =>
+      console.log(
+        `Uploaded: ${nconf.get('targetDirectory')}/${path.basename(file)}`
+      )
+    );
 
 if (nconf.get('hostname')) {
   client.hostname = nconf.get('hostname');
@@ -78,8 +100,14 @@ Promise.all([
     nconf.get('tokenSecret'),
     nconf.get('nsVersion'),
     nconf.get('production')
-  )
+  ),
 ])
-.then(([files]) => Promise.all(files.map(uploadFile)))
-.catch(e => console.error(e));
+  .then(([files]) => {
+    if (!files.length) {
+      throw new Error('No files found to upload');
+    }
 
+    return files;
+  })
+  .then(files => Promise.all(files.map(uploadFile)))
+  .catch(e => console.error(e));
