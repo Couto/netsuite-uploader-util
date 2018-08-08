@@ -7,7 +7,7 @@
     "netsuite-upload": "./bin/netsuite-upload"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "ava"
   },
   "repository": {
     "type": "git",
@@ -35,5 +35,8 @@
     "string-template": "^1.0.0",
     "upath": "^1.0.2",
     "yargs": "^12.0.1"
+  },
+  "devDependencies": {
+    "ava": "^0.25.0"
   }
 }
